@@ -20,15 +20,31 @@ fn main() -> wasmparser::Result<()> {
             .iter()
             .filter(|(_lname, lv)| lv.pc == (i as u32))
             .map(|(lname, _)| lname)
-            .join(", ");
-        match labels.is_empty() {
-            false => {
-                println!("{}:\t{}", labels, dir);
+            .collect_vec();
+
+        match labels.len() {
+            0 => {}
+            1 => {
+                println!("    {}:", labels[0]);
             }
-            true => {
-                println!("\t\t{}", dir);
+            2 => {
+                let (inner_label, outer_label) = {
+                    if labels[0].starts_with("__") {
+                        (labels[0], labels[1])
+                    } else {
+                        (labels[1], labels[0])
+                    }
+                };
+
+                println!();
+                println!("{}:", outer_label);
+                println!("    {}:", inner_label);
+            }
+            _ => {
+                panic!("unexpected labels length");
             }
         }
+        println!("    {}", dir);
     }
 
     Ok(())
