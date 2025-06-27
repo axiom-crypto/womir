@@ -180,6 +180,12 @@ mod tests {
     }
 
     #[test]
+    fn test_merkle_tree() {
+        // Judging by the binary, this program comes from Rust, but I don't have its source code.
+        test_interpreter_from_sample_programs("merkle-tree.wasm", "main", &[0, 0], vec![], &[0]);
+    }
+
+    #[test]
     fn test_wasm_address() {
         test_wasm("wasm_testsuite/address.wast", None);
     }
@@ -212,6 +218,11 @@ mod tests {
     #[test]
     fn test_wasm_call() {
         test_wasm("wasm_testsuite/call.wast", None);
+    }
+
+    #[test]
+    fn test_wasm_data() {
+        test_wasm("wasm_testsuite/data.wast", None);
     }
 
     #[test]
@@ -338,12 +349,12 @@ mod tests {
     fn test_wasm(case: &str, functions: Option<&[&str]>) {
         match extract_wast_test_info(case) {
             Ok(modules) => {
-                for (mod_name, asserts) in modules {
+                for (mod_name, line, asserts) in modules {
+                    println!("Testing module: {} at line {line}", mod_name.display());
                     let wasm_file = std::fs::read(mod_name).unwrap();
                     let program = womir::loader::load_wasm(GenericIrSetting, &wasm_file).unwrap();
                     let mut interpreter = Interpreter::new(program, SpectestExternalFunctions);
 
-                    // println!("assert cases: {asserts:#?}");
                     asserts
                         .iter()
                         .filter(|assert_case| {
@@ -374,11 +385,19 @@ mod tests {
     #[serde(tag = "type")]
     enum CommandEntry {
         #[serde(rename = "module")]
-        Module { filename: String },
+        Module { filename: String, line: usize },
         #[serde(rename = "assert_return")]
-        AssertReturn { action: Action, expected: Vec<Val> },
+        AssertReturn {
+            action: Action,
+            expected: Vec<Val>,
+            line: usize,
+        },
         #[serde(rename = "action")]
-        Action { action: Action, expected: Vec<Val> },
+        Action {
+            action: Action,
+            expected: Vec<Val>,
+            line: usize,
+        },
         #[serde(other)]
         Other,
     }
@@ -388,6 +407,7 @@ mod tests {
         pub function_name: String,
         pub args: Vec<u32>,
         pub expected: Vec<u32>,
+        pub _line: usize,
     }
 
     #[derive(Debug, Deserialize)]
@@ -409,7 +429,7 @@ mod tests {
     #[allow(clippy::type_complexity)]
     pub fn extract_wast_test_info(
         wast_path: &str,
-    ) -> Result<Vec<(PathBuf, Vec<AssertCase>)>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<(PathBuf, usize, Vec<AssertCase>)>, Box<dyn std::error::Error>> {
         let temp_file = NamedTempFile::with_prefix("test")?;
         let Some(parent_dir) = temp_file.path().parent() else {
             panic!("Could not determine parent directory.");
@@ -438,11 +458,19 @@ mod tests {
 
         for entry in entries {
             match entry {
-                CommandEntry::Module { filename } => {
-                    assert_returns_per_module.push((parent_dir.join(filename), Vec::new()));
+                CommandEntry::Module { filename, line } => {
+                    assert_returns_per_module.push((parent_dir.join(filename), line, Vec::new()));
                 }
-                CommandEntry::AssertReturn { action, expected }
-                | CommandEntry::Action { action, expected } => {
+                CommandEntry::AssertReturn {
+                    action,
+                    expected,
+                    line,
+                }
+                | CommandEntry::Action {
+                    action,
+                    expected,
+                    line,
+                } => {
                     if let Some(function_name) = action.field {
                         let args = action.args.unwrap_or_default();
 
@@ -452,11 +480,12 @@ mod tests {
                         assert_returns_per_module
                             .last_mut()
                             .unwrap()
-                            .1
+                            .2
                             .push(AssertCase {
                                 function_name,
                                 args,
                                 expected,
+                                _line: line,
                             });
                     }
                 }
