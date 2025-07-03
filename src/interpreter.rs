@@ -34,6 +34,7 @@ pub struct Interpreter<'a, E: ExternalFunctions> {
     external_functions: E,
     flat_program: Vec<Directive<'a>>,
     labels: HashMap<String, linker::LabelValue>,
+    pub pc_counter: Vec<u32>,
 }
 
 pub trait ExternalFunctions {
@@ -81,6 +82,7 @@ impl<'a, E: ExternalFunctions> Interpreter<'a, E> {
             external_functions,
             flat_program,
             labels,
+            pc_counter: vec![],
         };
 
         if let Some(start_function) = interpreter.program.c.start_function {
@@ -139,6 +141,10 @@ impl<'a, E: ExternalFunctions> Interpreter<'a, E> {
         let mut cycles = 0usize;
         let final_fp = loop {
             let instr = self.flat_program[self.pc as usize].clone();
+            if self.pc_counter.len() <= self.pc as usize {
+                self.pc_counter.resize(self.pc as usize + 1, 0);
+            }
+            self.pc_counter[self.pc as usize] += 1;
             log::trace!("PC: {}, FP: {}, Instr: {instr}", self.pc, self.fp);
 
             let mut should_inc_pc = true;

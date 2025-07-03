@@ -16,6 +16,38 @@ Under development:
 
 WOMIR has an [interpreter](https://github.com/powdr-labs/womir/blob/main/src/interpreter.rs) that is used for testing.
 
+## Analysis Tools
+
+The project provides a one-command analysis pipeline for WebAssembly files:
+
+- **WASM to WOMIR Conversion**
+- **Interpreter Execution & PC Counter Analysis**
+- **Instruction Type Histogram & WOMIR Annotation**
+
+### Usage
+
+Run the following script with your `.wasm` file:
+
+```bash
+./scripts/analyze_wasm.sh <wasm_file> [function_name] [inputs] [data_inputs]
+```
+
+**Examples:**
+- Generate only the WOMIR file:
+  ```bash
+  ./scripts/analyze_wasm.sh program.wasm
+  ```
+- Generate WOMIR, run interpreter, and produce all analysis outputs:
+  ```bash
+  ./scripts/analyze_wasm.sh program.wasm main 10 1,2,3
+  ```
+
+**Output files** will be saved in `target/analyze/`:
+- `*.womir` — Generated WOMIR IR
+- `pc_counter_data.json` — Execution data (if interpreter run)
+- `*_histogram.png` — Visual histogram
+- `annotated_*.womir` — WOMIR with execution counts
+
 ## Contributing
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
