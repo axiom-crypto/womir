@@ -181,8 +181,13 @@ mod tests {
 
     #[test]
     fn test_merkle_tree() {
-        // Judging by the binary, this program comes from Rust, but I don't have its source code.
-        test_interpreter_from_sample_programs("merkle-tree.wasm", "main", &[0, 0], vec![], &[0]);
+        test_interpreter_from_sample_programs(
+            "merkle_tree_loop.wasm",
+            "main",
+            &[0, 0],
+            vec![],
+            &[1],
+        );
     }
 
     #[test]
