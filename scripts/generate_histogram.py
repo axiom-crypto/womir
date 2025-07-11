@@ -65,20 +65,11 @@ def generate_instruction_type_histogram(data, womir_path):
     # Extract instruction types from WOMIR file
     instruction_types = extract_instruction_types(womir_path)
     
-    # Create a mapping from PC index to instruction type
-    pc_to_instruction_type = {}
-    instruction_index = 0
-    
-    for i, count in enumerate(pc_counter):
-        if count > 0 and instruction_index < len(instruction_types):
-            pc_to_instruction_type[i] = instruction_types[instruction_index]
-            instruction_index += 1
-    
     # Group execution counts by instruction type
     instruction_type_counts = {}
     for pc, count in enumerate(pc_counter):
-        if count > 0 and pc in pc_to_instruction_type:
-            instruction_type = pc_to_instruction_type[pc]
+        if count > 0 and pc < len(instruction_types):
+            instruction_type = instruction_types[pc]
             if instruction_type in instruction_type_counts:
                 instruction_type_counts[instruction_type] += count
             else:
